@@ -9,8 +9,12 @@
 #define MAX_CELL  1024
 #define COL_WIDTH 12
 
+#ifndef MIN
 #define MIN(a,b) ((a)<(b)?(a):(b))
+#endif
+#ifndef MAX
 #define MAX(a,b) ((a)>(b)?(a):(b))
+#endif
 
 typedef enum { CELL_TEXT, CELL_NUMBER, CELL_FORMULA } CellType;
 
