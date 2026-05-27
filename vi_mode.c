@@ -86,6 +86,7 @@ static void search_next(AppState *s, bool reverse) {
 }
 
 static void sort_rows(AppState *s, const char *arg) {
+    if (last_row <= 0) { snprintf(s->status_msg, 256, "E: nothing to sort"); return; }
     bool desc = (arg[0] == '!');
     if (desc) arg++;
     while (*arg == ' ') arg++;
@@ -289,24 +290,36 @@ static void handle_normal(AppState *s, int key) {
         return; /* unrecognised sequence — ignore */
     }
 
+    /* Digit accumulation — must happen before consuming count */
+    switch (key) {
+        case '1': case '2': case '3': case '4': case '5':
+        case '6': case '7': case '8': case '9':
+            s->count = s->count * 10 + (key - '0');
+            return;
+        case '0':
+            if (s->count > 0) {
+                s->count = s->count * 10; /* append 0 to multi-digit count */
+                return;
+            }
+            /* s->count == 0: '0' means go to col A */
+            s->cursor_col = 0;
+            adjust_viewport(s);
+            return;
+        default:
+            break;
+    }
+
+    /* Consume count for movement/action */
     int cnt = s->count > 0 ? s->count : 1;
     s->count = 0;
 
     switch (key) {
-        case '1': case '2': case '3': case '4': case '5':
-        case '6': case '7': case '8': case '9':
-            s->count = s->count * 10 + (key - '0'); return;
-
         case 'h': s->cursor_col = MAX(0,          s->cursor_col - cnt); break;
         case 'j': s->cursor_row = MIN(MAX_ROWS-1, s->cursor_row + cnt); break;
         case 'k': s->cursor_row = MAX(0,          s->cursor_row - cnt); break;
         case 'l': s->cursor_col = MIN(MAX_COLS-1, s->cursor_col + cnt); break;
         case 'w': s->cursor_col = MIN(MAX_COLS-1, s->cursor_col + cnt); break;
         case 'b': s->cursor_col = MAX(0,          s->cursor_col - cnt); break;
-        case '0':
-            if (s->count == 0) { s->cursor_col = 0; }
-            else { s->count *= 10; return; }
-            break;
         case '$': s->cursor_col = last_col; break;
         case 'G': s->cursor_row = last_row; break;
         case 'g': s->pending_key = 'g'; return;
