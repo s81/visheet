@@ -3,6 +3,7 @@
 #include <string.h>
 #include <stdio.h>
 #include <ctype.h>
+#include <limits.h>
 
 Cell *grid[MAX_ROWS][MAX_COLS];
 int   last_row = 0;
@@ -19,6 +20,7 @@ void grid_init(void) {
 }
 
 void grid_clear_cell(int row, int col) {
+    if (row < 0 || row >= MAX_ROWS || col < 0 || col >= MAX_COLS) return;
     free(grid[row][col]);
     grid[row][col] = NULL;
 }
@@ -29,6 +31,7 @@ void grid_clear_row(int row) {
 }
 
 void grid_set_cell(int row, int col, const char *raw) {
+    if (row < 0 || row >= MAX_ROWS || col < 0 || col >= MAX_COLS) return;
     if (!grid[row][col]) {
         grid[row][col] = calloc(1, sizeof(Cell));
         if (!grid[row][col]) return;
@@ -39,6 +42,7 @@ void grid_set_cell(int row, int col, const char *raw) {
 
     if (raw[0] == '=') {
         cell->type = CELL_FORMULA;
+        cell->display[0] = '\0';
     } else {
         char *end;
         strtod(raw, &end);
@@ -68,7 +72,9 @@ const char *col_to_str(int col, char *buf, size_t buflen) {
 }
 
 int str_to_col(const char *s) {
+    if (!s || !s[0]) return -1;
     int len = (int)strlen(s);
+    if (len > 2) return -1;
     if (len == 1) return s[0] - 'A';
     return 26 + (s[0] - 'A') * 26 + (s[1] - 'A');
 }
@@ -85,8 +91,9 @@ bool parse_cell_addr(const char *s, int *row, int *col) {
     char cbuf[3] = {0};
     while (s[i] && isupper((unsigned char)s[i]) && i < 2) { cbuf[i] = s[i]; i++; }
     if (i == 0 || !s[i] || !isdigit((unsigned char)s[i])) return false;
-    int r = atoi(s + i) - 1;
-    if (r < 0 || r >= MAX_ROWS) return false;
+    long rlong = strtol(s + i, NULL, 10);
+    if (rlong < 1 || rlong > MAX_ROWS) return false;
+    int r = (int)rlong - 1;
     int c = str_to_col(cbuf);
     if (c < 0 || c >= MAX_COLS) return false;
     *row = r; *col = c;

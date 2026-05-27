@@ -8,10 +8,12 @@ static int tests_run = 0, tests_passed = 0;
                        printf("PASS: " #name "\n"); } while(0)
 
 static void test_grid_init(void) {
+    grid_set_cell(1, 1, "hello");
+    assert(grid[1][1] != NULL);
     grid_init();
     assert(last_row == 0 && last_col == 0);
+    assert(grid[1][1] == NULL);
     assert(grid[0][0] == NULL);
-    assert(grid[MAX_ROWS-1][MAX_COLS-1] == NULL);
 }
 
 static void test_set_text(void) {
