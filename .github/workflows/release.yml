@@ -1,0 +1,51 @@
+name: Build and Release
+
+on:
+  push:
+    tags:
+      - 'v*.*.*'
+
+permissions:
+  contents: write
+
+jobs:
+  build:
+    runs-on: windows-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up MSYS2 (MinGW64 + GCC + Make)
+        uses: msys2/setup-msys2@v2
+        with:
+          msystem: MINGW64
+          update: true
+          install: mingw-w64-x86_64-gcc make
+
+      - name: Build
+        shell: msys2 {0}
+        run: make
+
+      - name: Test
+        shell: msys2 {0}
+        run: make test
+
+      - name: Release
+        uses: softprops/action-gh-release@v2
+        with:
+          files: visheet.exe
+          fail_on_unmatched_files: true
+          body: |
+            ## visheet ${{ github.ref_name }}
+
+            Download **visheet.exe** below and run it directly — no installation required.
+
+            **Requirements:** Windows 10 or 11, any console window (cmd.exe, PowerShell, Windows Terminal).
+
+            ```
+            visheet.exe                  open empty spreadsheet
+            visheet.exe data.csv         open a CSV file
+            ```
+
+            See the [user manual](docs/visheet-manual.md) for the full reference.
