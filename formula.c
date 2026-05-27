@@ -90,6 +90,7 @@ static double eval_range(Parser *p, int func) {
     bool first = true;
     for (int r = rlo; r <= rhi && !p->error; r++) {
         for (int c = clo; c <= chi && !p->error; c++) {
+            if (!grid[r][c]) continue;  /* skip empty cells */
             double v = cell_val(p, r, c);
             if (p->error) return 0.0;
             sum += v;

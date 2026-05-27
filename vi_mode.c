@@ -97,7 +97,16 @@ static void sort_rows(AppState *s, const char *arg) {
         for (int j = 0; j < last_row - i; j++) {
             const char *va = grid[j][sort_col]   ? grid[j][sort_col]->display   : "";
             const char *vb = grid[j+1][sort_col] ? grid[j+1][sort_col]->display : "";
-            int cmp = strcmp(va, vb);
+            char *ea, *eb;
+            double da = strtod(va, &ea);
+            double db = strtod(vb, &eb);
+            int cmp;
+            if (ea != va && eb != vb) {
+                /* both numeric */
+                cmp = (da > db) - (da < db);  /* -1, 0, or 1 */
+            } else {
+                cmp = strcmp(va, vb);
+            }
             if ((desc && cmp < 0) || (!desc && cmp > 0)) {
                 for (int c = 0; c < MAX_COLS; c++) {
                     Cell *tmp       = grid[j][c];
