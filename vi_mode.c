@@ -73,7 +73,7 @@ static void search_next(AppState *s, bool reverse) {
     int sr = s->cursor_row, sc = s->cursor_col;
     do {
         Cell *cell = grid[r][c];
-        if (cell && strstr(cell->display, s->search_pat)) {
+        if (cell && (strstr(cell->display, s->search_pat) || strstr(cell->raw, s->search_pat))) {
             s->cursor_row = r; s->cursor_col = c; adjust_viewport(s); return;
         }
         c += dr;
@@ -237,12 +237,19 @@ static void handle_visual(AppState *s, int key) {
         case 'l': s->cursor_col = MIN(MAX_COLS-1, s->cursor_col + 1); break;
         case 'y': {
             int r1 = MIN(s->visual_start_row, s->cursor_row);
+            int r2 = MAX(s->visual_start_row, s->cursor_row);
             for (int c = 0; c < MAX_COLS; c++) {
                 Cell *cell = grid[r1][c];
                 s->yank_row_data[c][0] = '\0';
                 if (cell) strncpy(s->yank_row_data[c], cell->raw, MAX_CELL - 1);
             }
-            s->yank_valid = true; s->mode = MODE_NORMAL; break;
+            s->yank_valid = true;
+            s->mode = MODE_NORMAL;
+            if (r2 > r1)
+                snprintf(s->status_msg, 256, "1 row yanked (multi-row yank not supported, yanked row %d)", r1 + 1);
+            else
+                snprintf(s->status_msg, 256, "1 row yanked");
+            break;
         }
         case 'd': {
             int r1 = MIN(s->visual_start_row, s->cursor_row);

@@ -16,13 +16,14 @@ static void render_formula_bar(const AppState *s) {
     if (s->mode == MODE_INSERT) content = s->cell_buf;
     else if (cell) content = cell->raw;
 
+    int fw = COLS - 10 > 1 ? COLS - 10 : 1;
     attron(COLOR_PAIR(CP_FORMULABAR) | A_BOLD);
-    mvprintw(0, 0, " %-6s: %-*.*s", addr, COLS - 10, COLS - 10, content);
+    mvprintw(0, 0, " %-6s: %-*.*s", addr, fw, fw, content);
     attroff(COLOR_PAIR(CP_FORMULABAR) | A_BOLD);
 }
 
 static void render_col_headers(const AppState *s) {
-    int vis = (COLS - 5) / (COL_WIDTH + 1);
+    int vis = COLS > 5 ? (COLS - 5) / (COL_WIDTH + 1) : 0;
     attron(COLOR_PAIR(CP_HEADER) | A_BOLD);
     mvprintw(1, 0, "    |");
     for (int vc = 0; vc < vis; vc++) {
@@ -37,7 +38,7 @@ static void render_col_headers(const AppState *s) {
 
 static void render_grid(const AppState *s) {
     int data_rows = LINES - 3;
-    int vis_cols  = (COLS - 5) / (COL_WIDTH + 1);
+    int vis_cols  = COLS > 5 ? (COLS - 5) / (COL_WIDTH + 1) : 0;
 
     for (int vr = 0; vr < data_rows; vr++) {
         int row = s->viewport_row + vr;
@@ -109,8 +110,9 @@ static void render_status_bar(const AppState *s) {
 }
 
 static void render_command_bar(const AppState *s) {
+    int cw = COLS - 2 > 1 ? COLS - 2 : 1;
     attron(COLOR_PAIR(CP_STATUS_CMD));
-    mvprintw(LINES - 1, 0, ":%-*s", COLS - 2, s->cmd_buf);
+    mvprintw(LINES - 1, 0, ":%-*s", cw, s->cmd_buf);
     attroff(COLOR_PAIR(CP_STATUS_CMD));
     move(LINES - 1, 1 + s->cmd_len);
 }
