@@ -14,6 +14,7 @@ static void set_display(int r, int c, const char *v) {
 }
 
 static void test_save_load_basic(void) {
+    remove("_tmp_basic.csv");
     grid_init();
     grid_set_cell(0, 0, "name"); set_display(0, 0, "name");
     grid_set_cell(0, 1, "age");  set_display(0, 1, "age");
@@ -30,6 +31,7 @@ static void test_save_load_basic(void) {
 }
 
 static void test_quoted_comma(void) {
+    remove("_tmp_comma.csv");
     grid_init();
     grid_set_cell(0, 0, "hello, world"); set_display(0, 0, "hello, world");
     assert(csv_save("_tmp_comma.csv") == CSV_OK);
@@ -40,6 +42,7 @@ static void test_quoted_comma(void) {
 }
 
 static void test_embedded_quote(void) {
+    remove("_tmp_quote.csv");
     grid_init();
     grid_set_cell(0, 0, "say \"hi\""); set_display(0, 0, "say \"hi\"");
     assert(csv_save("_tmp_quote.csv") == CSV_OK);
@@ -50,6 +53,7 @@ static void test_embedded_quote(void) {
 }
 
 static void test_formula_preserved(void) {
+    remove("_tmp_formula.csv");
     grid_init();
     grid_set_cell(0, 0, "=SUM(A2:A3)"); set_display(0, 0, "5");
     assert(csv_save("_tmp_formula.csv") == CSV_OK);
@@ -66,6 +70,7 @@ static void test_missing_file(void) {
 }
 
 static void test_empty_cells_skipped(void) {
+    remove("_tmp_empty.csv");
     grid_init();
     grid_set_cell(0, 0, "A"); set_display(0, 0, "A");
     /* col 1 intentionally empty */

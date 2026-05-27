@@ -6,51 +6,67 @@
 #include <stdbool.h>
 
 CsvError csv_load(const char *path) {
-    FILE *f = fopen(path, "r");
+    FILE *f = fopen(path, "rb");
     if (!f) return CSV_ERR_FILE;
-
     grid_init();
-    char line[MAX_COLS * 16];  /* conservative line buffer */
-    int row = 0;
 
-    while (fgets(line, sizeof(line), f) && row < MAX_ROWS) {
-        int col = 0;
-        char *p = line;
+    int row = 0, col = 0;
+    char field[MAX_CELL];
+    int fi = 0;
+    int c;
+    bool in_quotes = false;
 
-        while (*p && *p != '\n' && *p != '\r' && col < MAX_COLS) {
-            char field[MAX_CELL];
-            int  fi = 0;
-
-            if (*p == '"') {
-                p++;
-                while (*p) {
-                    if (*p == '"' && *(p+1) == '"') { if (fi < MAX_CELL-1) field[fi++] = '"'; p += 2; }
-                    else if (*p == '"') { p++; break; }
-                    else { if (fi < MAX_CELL-1) field[fi++] = *p; p++; }
+    while ((c = fgetc(f)) != EOF) {
+        if (in_quotes) {
+            if (c == '"') {
+                int next = fgetc(f);
+                if (next == '"') {
+                    /* escaped quote "" → " */
+                    if (fi < MAX_CELL - 1) field[fi++] = '"';
+                } else {
+                    /* end of quoted field */
+                    in_quotes = false;
+                    /* put back so delimiter/newline is handled below */
+                    ungetc(next, f);
                 }
-                if (*p == ',') p++;
             } else {
-                while (*p && *p != ',' && *p != '\n' && *p != '\r')
-                    { if (fi < MAX_CELL-1) field[fi++] = *p; p++; }
-                if (*p == ',') p++;
+                if (fi < MAX_CELL - 1) field[fi++] = c;
             }
-            field[fi] = '\0';
-
-            if (fi > 0) {
-                grid_set_cell(row, col, field);
-                /* text/number display is already set by grid_set_cell */
+        } else {
+            if (c == '"' && fi == 0) {
+                in_quotes = true;
+            } else if (c == ',') {
+                field[fi] = '\0';
+                if (fi > 0 && row < MAX_ROWS && col < MAX_COLS)
+                    grid_set_cell(row, col, field);
+                fi = 0;
+                col++;
+            } else if (c == '\n') {
+                /* end of record */
+                field[fi] = '\0';
+                if (fi > 0 && row < MAX_ROWS && col < MAX_COLS)
+                    grid_set_cell(row, col, field);
+                fi = 0;
+                col = 0;
+                row++;
+            } else if (c == '\r') {
+                /* skip \r in \r\n sequences */
+                continue;
+            } else {
+                if (fi < MAX_CELL - 1) field[fi++] = c;
             }
-            col++;
         }
-        row++;
     }
+    /* handle final field if file doesn't end with newline */
+    if (fi > 0 && row < MAX_ROWS && col < MAX_COLS)
+        grid_set_cell(row, col, field);
 
     fclose(f);
     return CSV_OK;
 }
 
 CsvError csv_save(const char *path) {
-    FILE *f = fopen(path, "w");
+    FILE *f = fopen(path, "wb");
     if (!f) return CSV_ERR_FILE;
 
     for (int r = 0; r <= last_row; r++) {
@@ -75,6 +91,10 @@ CsvError csv_save(const char *path) {
         fputs("\r\n", f);
     }
 
+    if (ferror(f)) {
+        fclose(f);
+        return CSV_ERR_FILE;
+    }
     fclose(f);
     return CSV_OK;
 }
