@@ -1,0 +1,9 @@
+value,result
+10,
+20,
+30,
+=SUM(A2:A4),
+=AVG(A2:A4),
+=MIN(A2:A4),
+=MAX(A2:A4),
+=COUNT(A2:A4),
