@@ -27,7 +27,9 @@ CsvError csv_load(const char *path) {
                     /* end of quoted field */
                     in_quotes = false;
                     /* put back so delimiter/newline is handled below */
-                    ungetc(next, f);
+                    if (next != EOF)
+                        ungetc(next, f);
+                    /* if next == EOF, let the outer loop exit naturally */
                 }
             } else {
                 if (fi < MAX_CELL - 1) field[fi++] = c;
@@ -40,7 +42,8 @@ CsvError csv_load(const char *path) {
                 if (fi > 0 && row < MAX_ROWS && col < MAX_COLS)
                     grid_set_cell(row, col, field);
                 fi = 0;
-                col++;
+                if (col < MAX_COLS)
+                    col++;
             } else if (c == '\n') {
                 /* end of record */
                 field[fi] = '\0';
