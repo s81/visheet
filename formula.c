@@ -113,6 +113,17 @@ static double eval_range(Parser *p, int func) {
 static double parse_factor(Parser *p) {
     if (p->error) return 0.0;
     skip_ws(p);
+
+    /* unary minus / plus */
+    if (p->src[p->pos] == '-') {
+        p->pos++;
+        return -parse_factor(p);
+    }
+    if (p->src[p->pos] == '+') {
+        p->pos++;
+        return parse_factor(p);
+    }
+
     /* range functions: check keyword followed by '(' */
     static const char *funcs[] = {"SUM", "AVG", "MIN", "MAX", "COUNT"};
     for (int fi = 0; fi < 5; fi++) {
@@ -201,9 +212,9 @@ void formula_eval_cell(int row, int col) {
     const char *expr = c->raw;
     if (*expr == '=') expr++;
 
-    /* Mark as being evaluated (prevent re-entry for self-refs):
-       set display to a sentinel so the dirty+empty check won't re-enter,
-       but we need dirty=true still — use eval_depth instead. */
+    /* Write sentinel so re-entrant cell_val sees '#' immediately */
+    snprintf(c->display, MAX_CELL, "#CIRC!");
+
     eval_depth++;
     Parser p = { .src = expr, .pos = 0, .error = false, .errtok = {0} };
     double result = parse_expr(&p);

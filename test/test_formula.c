@@ -110,6 +110,14 @@ static void test_parse_error(void) {
     tests_passed++;
 }
 
+static void test_unary_minus(void) {
+    grid_init();
+    grid_set_cell(0, 0, "=-5");
+    formula_eval_cell(0, 0);
+    assert(atof(grid[0][0]->display) == -5.0);
+    tests_passed++;
+}
+
 #define RUN(name) do { tests_run++; test_##name(); \
                        printf("PASS: " #name "\n"); } while(0)
 
@@ -124,6 +132,7 @@ int main(void) {
     RUN(div_by_zero);
     RUN(circular_ref);
     RUN(parse_error);
+    RUN(unary_minus);
     printf("\n%d/%d tests passed\n", tests_passed, tests_run);
     return (tests_passed == tests_run) ? 0 : 1;
 }
